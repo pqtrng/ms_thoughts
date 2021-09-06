@@ -1,0 +1,12 @@
+python-dotenv
+flask
+flask-restplus
+flask-sqlalchemy
+pytest-flask
+freezegun
+delorean
+faker
+pyjwt
+cryptography
+parse
+Werkzeug
