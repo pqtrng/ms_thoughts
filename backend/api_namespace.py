@@ -26,6 +26,10 @@ thought_parser = authentication_parser.copy()
 thought_parser.add_argument(
     'text', type=str, required=True, help='Text of the thouhgt')
 
+search_parser = api_namespace.parser()
+search_parser.add_argument(
+    'search', type=str, required=False, help='Search in the text of thoughts.')
+
 model = {
     'id': fields.Integer(),
     'username': fields.String(),
@@ -43,7 +47,24 @@ class MeThoughtListCreate(Resource):
 
 @api_namespace.route('/thoughts/')
 class ThoughtList(Resource):
-    pass
+    @api_namespace.doc('list_thoughts')
+    @api_namespace.marshal_with(thought_model, as_list=True)
+    @api_namespace.expect(search_parser)
+    def get(self):
+        """Retrieves all the thoughts
+
+        Returns:
+            thoughts: A list of all current thought
+        """
+        args = search_parser.parse_args()
+        search_param = args['search']
+        query = ThoughtModel.query
+        if search_param:
+            query = (query.filter(ThoughtModel.text.contains(search_param)))
+
+        query = query.order_by('id')
+        thoughts = query.all()
+        return thoughts
 
 
 @api_namespace.route('/thoughts/<int:thought_id>')
