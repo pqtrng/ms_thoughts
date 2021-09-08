@@ -48,4 +48,16 @@ class ThoughtList(Resource):
 
 @api_namespace.route('/thoughts/<int:thought_id>')
 class ThoughtsRetrieve(Resource):
-    pass
+    @api_namespace.doc('retrieve_thought')
+    @api_namespace.marshal_with(thought_model)
+    def get(self, thought_id):
+        """Retrieve a thought
+
+        Args:
+            thought_id (str): Id of thought
+        """
+        thought = ThoughtModel.query.get(thought_id)
+        if not thought:
+            return '', http.client.NOT_FOUND
+
+        return thought
