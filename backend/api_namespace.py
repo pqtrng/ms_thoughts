@@ -18,6 +18,7 @@ def authentication_header_parser(value):
     return username
 
 
+# Parser
 authentication_parser = api_namespace.parser()
 authentication_parser.add_argument(
     'Authentication', location='headers', type=str, help='Bearer Access Token')
@@ -30,6 +31,7 @@ search_parser = api_namespace.parser()
 search_parser.add_argument(
     'search', type=str, required=False, help='Search in the text of thoughts.')
 
+# Model
 model = {
     'id': fields.Integer(),
     'username': fields.String(),
@@ -40,9 +42,41 @@ model = {
 thought_model = api_namespace.model('Thought', model)
 
 
+# Api
 @api_namespace.route('/me/thouhgt/')
 class MeThoughtListCreate(Resource):
-    pass
+    @api_namespace.doc('list_thoughts')
+    @api_namespace.expect(authentication_parser)
+    @api_namespace.marshal_with(thought_model, as_list=True)
+    def get(self):
+        """Retrieves all thoughts
+        """
+        args = authentication_parser.parse_args()
+        username = authentication_header_parser(args['Authorization'])
+        thoughts = (ThoughtModel
+                    .query
+                    .filter(
+                        ThoughtModel.username == username)
+                    .order_by('id')
+                    .all())
+
+        return thoughts
+
+    @api_namespace.doc('create_thought')
+    @api_namespace.expect(thought_parser)
+    @api_namespace.marshal_with(thought_model, code=http.client.CREATED)
+    def post(self):
+        """Create a new thought
+        """
+        args = thought_parser.parse_args()
+        username = authentication_header_parser(args['Authentication'])
+        new_thought = ThoughtModel(
+            username=username, text=args['text'], timestamp=datetime.utcnow())
+        db.session.add(new_thought)
+        db.session.commit()
+        result = api_namespace.marshal(new_thought, thought_model)
+
+        return result, http.client.CREATED
 
 
 @api_namespace.route('/thoughts/')
